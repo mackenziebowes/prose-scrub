@@ -1,9 +1,9 @@
-// A small, dependency-free command framework built to be driven by agents as
-// well as people. mkcmd-agent copies this file into every CLI it generates.
+// A small, dependency-free command framework for CLIs that agents drive.
+// mkcmd-agent copies this file into every CLI it generates.
 //
 // The contract:
-//   - Every input is a flag or positional. Nothing blocks on a prompt unless a
-//     human is at a terminal, and `--no-input` turns even that off.
+//   - Every input is a flag or positional. Nothing ever prompts or reads stdin
+//     unless a command chooses to.
 //   - `--json` prints exactly one JSON object on stdout:
 //       { "ok": true,  "command": "...", "result": ... }
 //       { "ok": false, "command": "...", "error": { "code", "message", "hint" } }
@@ -15,7 +15,6 @@
 import { parseArgs } from "node:util";
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { createInterface } from "node:readline/promises";
 
 export type FlagSpec = {
   type: "string" | "boolean";
@@ -23,8 +22,6 @@ export type FlagSpec = {
   required?: boolean;
   default?: string | boolean;
   short?: string;
-  /** Question to ask when the flag is missing and a human is at a terminal. */
-  prompt?: string;
 };
 
 export type Flags = Record<string, FlagSpec>;
@@ -43,8 +40,6 @@ export type Context<F extends Flags> = {
   args: string[];
   /** True when output is JSON. Commands rarely need this; return data instead. */
   json: boolean;
-  /** True when a human is at a terminal and prompting is allowed. */
-  interactive: boolean;
   /** Progress messages. Always stderr, so stdout stays clean. */
   log: (message: string) => void;
 };
@@ -100,7 +95,6 @@ export type CliMeta = {
 const GLOBAL_FLAGS: Flags = {
   json: { type: "boolean", description: "Print one JSON object on stdout instead of text." },
   help: { type: "boolean", short: "h", description: "Show help for the CLI or a command." },
-  "no-input": { type: "boolean", description: "Never prompt, even at a terminal." },
 };
 
 type Out = { stdout: (s: string) => void; stderr: (s: string) => void };
@@ -112,8 +106,6 @@ const defaultOut: Out = {
 /** Runs the CLI and returns the exit code. The caller decides whether to exit. */
 export async function runCLI(meta: CliMeta, argv = process.argv.slice(2), out: Out = defaultOut): Promise<number> {
   const json = argv.includes("--json");
-  const noInput = argv.includes("--no-input");
-  const interactive = !json && !noInput && Boolean(process.stdin.isTTY && process.stdout.isTTY);
   const [first, ...rest] = argv;
   let commandName = "";
   let activeCommand: Command<any, any> | undefined;
@@ -205,9 +197,6 @@ export async function runCLI(meta: CliMeta, argv = process.argv.slice(2), out: O
     const missing: string[] = [];
     for (const [key, spec] of Object.entries(flagsOf(cmd))) {
       let v = values[key];
-      if (v === undefined && spec.required && spec.prompt && interactive) {
-        v = (await ask(spec.prompt)) || undefined;
-      }
       if (v === undefined) v = spec.default ?? (spec.type === "boolean" ? false : undefined);
       if (v === undefined && spec.required) missing.push(`--${key}`);
       flags[key] = v;
@@ -223,7 +212,6 @@ export async function runCLI(meta: CliMeta, argv = process.argv.slice(2), out: O
       flags: flags as FlagValues<Flags>,
       args: parsed.positionals,
       json,
-      interactive,
       log: (m) => out.stderr(m),
     });
     emitOk(result, cmd.render);
@@ -273,7 +261,7 @@ export function describe(meta: CliMeta, only?: Command<any, any>) {
       json: "--json prints one object on stdout: {ok, command, result} or {ok:false, command, error:{code, message, hint?, details?}}",
       exitCodes: { "0": "success", "1": "failure", "2": "usage error" },
       stderr: "progress and logs only",
-      prompts: "only at an interactive terminal; --no-input disables them",
+      prompts: "never: a missing required flag is a usage error",
     },
     globalFlags: Object.entries(GLOBAL_FLAGS).map(([name, s]) => ({
       name: `--${name}`,
@@ -345,15 +333,6 @@ function formatHuman(value: unknown, indent = ""): string {
       v !== null && typeof v === "object" ? `${indent}${k}:\n${formatHuman(v, indent + "  ")}` : `${indent}${k}: ${String(v)}`,
     )
     .join("\n");
-}
-
-async function ask(question: string): Promise<string> {
-  const rl = createInterface({ input: process.stdin, output: process.stderr });
-  try {
-    return (await rl.question(`${question} `)).trim();
-  } finally {
-    rl.close();
-  }
 }
 
 /** Finds the nearest package.json above this file, so it works from src/ and dist/. */
