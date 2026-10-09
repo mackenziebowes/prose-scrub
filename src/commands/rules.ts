@@ -15,6 +15,6 @@ export const rules = defineCommand({
   }),
   render: (r) =>
     r.rules
-      .map((x) => `${x.severity === "error" ? "error  " : "warning"}  ${x.id.padEnd(30)}  ${x.description}\n         ${"".padEnd(30)}  fix: ${x.fix}`)
-      .join("\n") + `\n\n${r.stockPhrases} stock phrases in phrase.stock. Errors fail the gate; warnings fail it with --strict.`,
+      .map((x) => `${x.id.padEnd(30)}  ${x.description}\n${"".padEnd(30)}  fix: ${x.fix}`)
+      .join("\n") + `\n\n${r.stockPhrases} stock phrases in phrase.stock. Every finding fails the gate. structure.pre-negation can't be ignored.`,
 });

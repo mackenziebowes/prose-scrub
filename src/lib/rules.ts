@@ -1,11 +1,15 @@
 import phrasesTsv from "../data/ai-phrases.tsv" with { type: "text" };
 
-export type Severity = "error" | "warning";
-
-/** A rule that matches inside a line of prose. */
+/**
+ * A rule that matches inside a line of text. Every rule is fatal: any finding fails the gate.
+ * `scope: "chars"` rules (dashes, quotes, ellipses) run on every string a reader could see,
+ * however short; `"prose"` rules run only on text that reads like prose.
+ */
 export type LineRule = {
   id: string;
-  severity: Severity;
+  scope: "chars" | "prose";
+  /** false: --ignore can't switch this rule off. */
+  ignorable: boolean;
   description: string;
   fix: string;
   source: "deslop" | "stop-slop" | "prose-scrub";
@@ -50,10 +54,10 @@ function loosePhrase(phrase: string): string {
 const stock = deslopPhrases();
 
 export const lineRules: LineRule[] = [
-  // ---- errors: the gate fails on these ----
   {
     id: "dash.em",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "Em dash. Punctuation a keyboard doesn't produce; the loudest tell.",
     fix: "Use a comma, a colon, parentheses, or two sentences. A spaced hyphen ( - ) if nothing else fits.",
     source: "deslop",
@@ -61,7 +65,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "dash.en",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "En dash.",
     fix: "Use a plain hyphen for ranges (2020-2024), otherwise rewrite as for an em dash.",
     source: "deslop",
@@ -69,7 +74,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "dash.bar",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "Horizontal bar used as a dash.",
     fix: "Rewrite as for an em dash.",
     source: "deslop",
@@ -77,7 +83,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "dash.double-hyphen",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "Double hyphen standing in for an em dash.",
     fix: "Rewrite as for an em dash.",
     source: "deslop",
@@ -86,7 +93,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "quote.curly",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "Curly quotes. Hand-typed text has straight quotes.",
     fix: 'Use straight quotes: " and \'.',
     source: "deslop",
@@ -94,7 +102,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "ellipsis.char",
-    severity: "error",
+    scope: "chars",
+    ignorable: true,
     description: "Single-character ellipsis.",
     fix: "Use three periods (...).",
     source: "deslop",
@@ -102,7 +111,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.stock",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Stock phrase that LLMs produce far more often than people do.",
     fix: "Say the specific thing plainly, or cut the sentence if there isn't one.",
     source: "deslop",
@@ -110,7 +120,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.throat-clearing",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Throat-clearing opener that announces a point instead of making it.",
     fix: "Delete it and start with the point.",
     source: "stop-slop",
@@ -131,7 +142,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.emphasis-crutch",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Emphasis crutch that adds no meaning.",
     fix: "Delete it.",
     source: "stop-slop",
@@ -142,7 +154,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.filler",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Filler opener or closer.",
     fix: "Delete it and start at the real first sentence.",
     source: "stop-slop",
@@ -162,7 +175,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.meta",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Meta-commentary about the writing instead of the subject.",
     fix: "Delete it. Let the structure show itself.",
     source: "stop-slop",
@@ -183,7 +197,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.vague-declarative",
-    severity: "error",
+    scope: "prose",
+    ignorable: true,
     description: "Announces importance without naming the specific thing.",
     fix: "Replace it with the specific thing, or cut it.",
     source: "stop-slop",
@@ -196,12 +211,12 @@ export const lineRules: LineRule[] = [
     ]),
   },
 
-  // ---- warnings: shown always, fail the gate only with --strict ----
   {
     id: "structure.pre-negation",
-    severity: "warning",
-    description: 'Pre-negation: "it\'s not X, it\'s Y". Knocks down a claim nobody made.',
-    fix: "Delete the negated half and keep the claim. Keep the contrast only if a real reader could have believed X.",
+    scope: "prose",
+    ignorable: false,
+    description: 'Pre-negation: "it\'s not X, it\'s Y". Knocks down a claim nobody made. Forbidden: --ignore can\'t skip it.',
+    fix: "Delete the negated half and keep the claim. If the claim alone is thin, strengthen it or cut the sentence. Never restore the negation.",
     source: "deslop",
     pattern: new RegExp(
       [
@@ -217,7 +232,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "structure.trailing-participle",
-    severity: "warning",
+    scope: "prose",
+    ignorable: true,
     description: 'Trailing participle clause: "..., ensuring seamless integration".',
     fix: "If it adds a fact, make it its own sentence. Otherwise delete it.",
     source: "deslop",
@@ -225,7 +241,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "structure.connector-opener",
-    severity: "warning",
+    scope: "prose",
+    ignorable: true,
     description: "Paragraph opens with a connector.",
     fix: "Delete it, or rewrite so the logical turn shows in the content.",
     source: "deslop",
@@ -233,7 +250,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "word.corporate",
-    severity: "warning",
+    scope: "prose",
+    ignorable: true,
     description: "Corporate or inflated word.",
     fix: "Use the plain word: use, help, lead, start, strong, smooth, look at.",
     source: "deslop",
@@ -251,7 +269,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "phrase.jargon",
-    severity: "warning",
+    scope: "prose",
+    ignorable: true,
     description: "Business jargon.",
     fix: "Handle, explain, accept, field, important, commit, analysis, reconsider, next, revisit, agreed.",
     source: "stop-slop",
@@ -263,7 +282,8 @@ export const lineRules: LineRule[] = [
   },
   {
     id: "word.adverb",
-    severity: "warning",
+    scope: "prose",
+    ignorable: true,
     description: "Softener or intensifier adverb.",
     fix: "Delete it. If the sentence goes flat, the claim needed support, not an adverb.",
     source: "stop-slop",
@@ -278,14 +298,14 @@ export const lineRules: LineRule[] = [
 export const fileRules = [
   {
     id: "rhythm.flat",
-    severity: "warning" as Severity,
-    description: "Sentence lengths barely vary (burstiness under 0.6). Uniform cadence reads as generated.",
+    ignorable: true,
+    description: "Sentence lengths barely vary (burstiness under 0.6; under 0.4 is a strong tell). Uniform cadence reads as generated.",
     fix: "Split a long sentence, merge two short ones, put a four-word sentence next to a thirty-word one.",
     source: "deslop" as const,
   },
 ];
 
-export const allRules = [...lineRules.map(({ pattern, ...r }) => r), ...fileRules];
+export const allRules = [...lineRules.map(({ pattern, ...r }) => r), ...fileRules.map((r) => ({ ...r, scope: "prose" as const }))];
 
 export function stockPhraseCount(): number {
   return stock.length;

@@ -1,14 +1,13 @@
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
-import { extract, kindOf, type Kind } from "./extract";
-import { fileRules, lineRules, type Severity } from "./rules";
+import { extractViews, kindOf, type Kind } from "./extract";
+import { fileRules, lineRules } from "./rules";
 
 export type Finding = {
   file: string;
   line: number;
   col: number;
   rule: string;
-  severity: Severity;
   match: string;
   context: string;
   fix: string;
@@ -20,15 +19,13 @@ export type FileReport = {
   words: number;
   sentences: number;
   burstiness: number | null;
-  errors: number;
-  warnings: number;
+  findings: number;
 };
 
 export type ScanResult = {
   passed: boolean;
-  strict: boolean;
-  errors: number;
-  warnings: number;
+  /** Number of findings. Every finding fails the gate. */
+  count: number;
   files: FileReport[];
   findings: Finding[];
 };
@@ -74,15 +71,16 @@ function burstiness(prose: string): { value: number | null; sentences: number } 
 }
 
 export function scanText(label: string, text: string, kind: Kind, ignore: string[]): { report: FileReport; findings: Finding[] } {
-  const ignored = (id: string) => ignore.some((x) => id === x || id.startsWith(`${x}.`));
-  const prose = extract(text, kind);
-  const proseLines = prose.split("\n");
+  const ignored = (rule: { id: string; ignorable: boolean }) =>
+    rule.ignorable && ignore.some((x) => rule.id === x || rule.id.startsWith(`${x}.`));
+  const { prose, chars } = extractViews(text, kind);
+  const views = { prose: prose.split("\n"), chars: chars.split("\n") };
   const rawLines = text.split("\n");
   const findings: Finding[] = [];
 
   for (const rule of lineRules) {
-    if (ignored(rule.id)) continue;
-    proseLines.forEach((line, i) => {
+    if (ignored(rule)) continue;
+    views[rule.scope].forEach((line, i) => {
       if (!line.trim()) return;
       for (const m of line.matchAll(rule.pattern)) {
         const col = m.index! + 1 + (m[0].length - m[0].trimStart().length);
@@ -93,7 +91,6 @@ export function scanText(label: string, text: string, kind: Kind, ignore: string
           line: i + 1,
           col,
           rule: rule.id,
-          severity: rule.severity,
           match: m[0].trim(),
           context: `${from > 0 ? "..." : ""}${raw.slice(from, col + 70).trim()}${col + 70 < raw.length ? "..." : ""}`,
           fix: rule.fix,
@@ -105,15 +102,14 @@ export function scanText(label: string, text: string, kind: Kind, ignore: string
   const words = (prose.match(/[\p{L}\p{N}][\p{L}\p{N}'’-]*/gu) ?? []).length;
   const rhythm = burstiness(prose);
   const flat = fileRules[0]!;
-  if (!ignored(flat.id) && rhythm.value !== null && rhythm.value < 0.6) {
+  if (!ignored(flat) && rhythm.value !== null && rhythm.value < 0.6) {
     findings.push({
       file: label,
       line: 1,
       col: 1,
       rule: flat.id,
-      severity: flat.severity,
       match: `burstiness ${rhythm.value}`,
-      context: `${rhythm.sentences} sentences; human prose usually sits between 0.6 and 1.2`,
+      context: `${rhythm.sentences} sentences; human prose usually sits between 0.6 and 1.2${rhythm.value < 0.4 ? " (under 0.4: strong tell)" : ""}`,
       fix: flat.fix,
     });
   }
@@ -126,22 +122,17 @@ export function scanText(label: string, text: string, kind: Kind, ignore: string
       words,
       sentences: rhythm.sentences,
       burstiness: rhythm.value,
-      errors: findings.filter((f) => f.severity === "error").length,
-      warnings: findings.filter((f) => f.severity === "warning").length,
+      findings: findings.length,
     },
     findings,
   };
 }
 
-export function summarize(parts: Array<{ report: FileReport; findings: Finding[] }>, strict: boolean): ScanResult {
+export function summarize(parts: Array<{ report: FileReport; findings: Finding[] }>): ScanResult {
   const findings = parts.flatMap((p) => p.findings);
-  const errors = findings.filter((f) => f.severity === "error").length;
-  const warnings = findings.length - errors;
   return {
-    passed: errors === 0 && (!strict || warnings === 0),
-    strict,
-    errors,
-    warnings,
+    passed: findings.length === 0,
+    count: findings.length,
     files: parts.map((p) => p.report),
     findings,
   };

@@ -78,11 +78,36 @@ export function extractSource(text: string): string {
   return t;
 }
 
+/**
+ * TS/JS/TSX, for character rules: every string literal and JSX text, however short, minus
+ * imports and class lists. A two-character label like "Next —" still gets checked for dashes.
+ */
+export function extractSourceStrings(text: string): string {
+  const ranges: Array<[number, number]> = [];
+  const patterns = [/"((?:[^"\\\n]|\\.)+)"/g, /'((?:[^'\\\n]|\\.)+)'/g, /`((?:[^`\\]|\\.)+)`/g, />([^<>{}=]+)</g];
+  for (const re of patterns) {
+    for (const m of text.matchAll(re)) {
+      const lineStart = text.lastIndexOf("\n", m.index!) + 1;
+      if (/^\s*import\b/.test(text.slice(lineStart, m.index!))) continue;
+      if (/(?:className|class)\s*=\s*\{?\s*$|\bcn\([^)]*$|\bclsx\([^)]*$/.test(text.slice(Math.max(0, m.index! - 80), m.index!))) continue;
+      const start = m.index! + 1;
+      ranges.push([start, start + m[1]!.length]);
+    }
+  }
+  return keepOnly(text, ranges);
+}
+
 function readsLikeProse(s: string): boolean {
   const words = s.replace(/\s+/g, " ").trim().split(" ");
   if (words.length < 3) return false;
   const codey = words.filter((w) => /[\[\]/:=_{}<>]|^\d+(px|rem|%)$|^[a-z]+-[a-z0-9-]+$/.test(w) && !/^[\p{L}]+-[\p{L}]+[.,;:]?$/u.test(w)).length;
   return codey / words.length < 0.34;
+}
+
+/** Two views of a file: `prose` for phrase and structure rules, `chars` for dash, quote and ellipsis rules. */
+export function extractViews(text: string, kind: Kind): { prose: string; chars: string } {
+  const prose = extract(text, kind);
+  return { prose, chars: kind === "source" ? extractSourceStrings(text) : prose };
 }
 
 export function extract(text: string, kind: Kind): string {

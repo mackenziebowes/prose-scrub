@@ -49,11 +49,13 @@ test("HTML: entities count, scripts, styles and pre blocks don't", async () => {
   expect(findings[0]).toMatchObject({ rule: "dash.em", match: "&mdash;", line: 4 });
 });
 
-test("TSX: JSX text is checked, imports and class names are not", async () => {
+test("TSX: JSX text and short labels are checked, imports and class names are not", async () => {
   const { stdout } = await run(["scan", join(FIX, "Page.tsx"), "--json"]);
   const findings = JSON.parse(stdout).error.details.findings;
-  expect(ids(findings)).toEqual(["dash.em"]);
-  expect(findings[0].line).toBe(6);
+  expect(findings.map((f: { rule: string; line: number }) => [f.rule, f.line])).toEqual([
+    ["dash.em", 6],
+    ["dash.em", 8],
+  ]);
 });
 
 test("directories recurse and skip node_modules", async () => {
@@ -64,12 +66,19 @@ test("directories recurse and skip node_modules", async () => {
   expect(ids(out.findings)).toEqual(["structure.pre-negation"]);
 });
 
-test("warnings pass by default and fail with --strict", async () => {
-  const loose = await run(["scan", join(FIX, "site", "notes.md"), "--json"]);
-  expect(loose.code).toBe(0);
-  const strict = await run(["scan", join(FIX, "site", "notes.md"), "--strict", "--json"]);
-  expect(strict.code).toBe(1);
-  expect(JSON.parse(strict.stdout).error.message).toContain("--strict");
+test("every finding fails the gate", async () => {
+  const { code, stdout } = await run(["scan", join(FIX, "site", "notes.md"), "--json"]);
+  expect(code).toBe(1);
+  expect(ids(JSON.parse(stdout).error.details.findings)).toEqual(["structure.pre-negation"]);
+});
+
+test("pre-negation can't be ignored, by id or by prefix", async () => {
+  const byId = await run(["scan", join(FIX, "site", "notes.md"), "--ignore", "structure.pre-negation", "--json"]);
+  expect(byId.code).toBe(2);
+  expect(JSON.parse(byId.stdout).error.message).toContain("can't be ignored");
+  const byPrefix = await run(["scan", join(FIX, "site", "notes.md"), "--ignore", "structure", "--json"]);
+  expect(byPrefix.code).toBe(1);
+  expect(ids(JSON.parse(byPrefix.stdout).error.details.findings)).toEqual(["structure.pre-negation"]);
 });
 
 test("--ignore skips rules by id or prefix", async () => {
@@ -88,7 +97,7 @@ test("--stdin scans piped text", async () => {
 test("people get the report on stdout and the verdict on stderr", async () => {
   const { code, stdout, stderr } = await run(["scan", join(FIX, "sloppy.md")]);
   expect(code).toBe(1);
-  expect(stdout).toContain('3:71  error    dash.em  "—"');
+  expect(stdout).toContain('3:71  dash.em  "—"');
   expect(stderr).toContain("error: Found");
 });
 
@@ -115,7 +124,7 @@ test("describe lists scan and rules", async () => {
 });
 
 test("flat prose is flagged even when headings and lists surround it", async () => {
-  const { code, stdout } = await run(["scan", join(FIX, "flat.md"), "--strict", "--json"]);
+  const { code, stdout } = await run(["scan", join(FIX, "flat.md"), "--json"]);
   expect(code).toBe(1);
   const flat = JSON.parse(stdout).error.details.findings.find((f: { rule: string }) => f.rule === "rhythm.flat");
   expect(flat).toBeDefined();
