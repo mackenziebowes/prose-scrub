@@ -258,3 +258,16 @@ test.skipIf(!hasKey)("judge flags the inflated paragraph and the empty sentences
   expect(flagged("superficial")).toContain("p3.s3");
   expect(flagged("superficial").filter((id: string) => id.startsWith("p1"))).toEqual([]);
 }, 120000);
+
+test("copula avoidance: serves as, stood as, boasts and functions as are flagged; plain verbs aren't", async () => {
+  const { code, stdout } = await run(["scan", join(FIX, "copula.md"), "--json"]);
+  expect(code).toBe(1);
+  const hits = JSON.parse(stdout).error.details.findings.filter((f: { rule: string }) => f.rule === "word.copula-avoidance");
+  expect(hits.map((f: { line: number; match: string }) => [f.line, f.match])).toEqual([
+    [1, "serves as"],
+    [3, "stood as"],
+    [5, "boasts"],
+    [7, "functions as"],
+  ]);
+});
+

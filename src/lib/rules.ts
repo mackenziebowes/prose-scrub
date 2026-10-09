@@ -269,6 +269,20 @@ export const lineRules: LineRule[] = [
     ]),
   },
   {
+    id: "word.copula-avoidance",
+    scope: "prose",
+    ignorable: true,
+    description: "A dressed-up verb standing in for is or has (Wikipedia: Signs of AI writing, avoidance of basic copulatives).",
+    fix: "Say is, are or has: \"the library is a bridge\", \"the hotel has a rooftop pool\".",
+    source: "prose-scrub",
+    pattern: words([
+      "serve as", "serves as", "served as", "serving as",
+      "stand as", "stands as", "stood as", "standing as",
+      "boast", "boasts", "boasted", "boasting",
+      "function as", "functions as", "functioned as", "functioning as",
+    ]),
+  },
+  {
     id: "phrase.jargon",
     scope: "prose",
     ignorable: true,
