@@ -118,9 +118,9 @@ test("rules lists every rule with a fix", async () => {
   expect(r.rules.map((x: { id: string }) => x.id)).toContain("rhythm.flat");
 });
 
-test("describe lists scan, rules and headings", async () => {
+test("describe lists every command", async () => {
   const { stdout } = await run(["describe"]);
-  expect(JSON.parse(stdout).commands.map((c: { name: string }) => c.name)).toEqual(["scan", "rules", "headings"]);
+  expect(JSON.parse(stdout).commands.map((c: { name: string }) => c.name)).toEqual(["scan", "rules", "headings", "units", "judge"]);
 });
 
 test("flat prose is flagged even when headings and lists surround it", async () => {
@@ -180,8 +180,9 @@ test("MDX: imports, exports, JSX and expressions are skipped", async () => {
   expect(JSON.parse(stdout).result.files[0].kind).toBe("mdx");
 });
 
-test("the repo's own README, CHANGELOG, AGENTS.md and skill pass the gate", async () => {
-  const { code, stdout } = await run(["scan", "README.md", "CHANGELOG.md", "AGENTS.md", "skills", "--json"]);
+// Prose for readers is gated; instructions for agents (AGENTS.md, the skill) aren't.
+test("the repo's own README and CHANGELOG pass the gate", async () => {
+  const { code, stdout } = await run(["scan", "README.md", "CHANGELOG.md", "--json"]);
   const r = JSON.parse(stdout);
   expect(r.ok ? [] : r.error.details?.findings ?? r.error).toEqual([]);
   expect(code).toBe(0);
@@ -211,3 +212,49 @@ test("headings reads stdin", async () => {
   expect(code).toBe(0);
   expect(JSON.parse(stdout).result.files[0].headings.map((h: { text: string }) => h.text)).toEqual(["One", "Two"]);
 });
+
+test("units numbers paragraphs and sentences, with lines, and skips headings", async () => {
+  const { code, stdout } = await run(["units", join(FIX, "judge.md"), "--json"]);
+  expect(code).toBe(0);
+  const r = JSON.parse(stdout).result;
+  expect(r.paragraphs.map((p: { id: string; line: number }) => [p.id, p.line])).toEqual([["p1", 3], ["p2", 5], ["p3", 7]]);
+  expect(r.paragraphs[0].sentences.map((s: { id: string; text: string }) => [s.id, s.text])).toEqual([
+    ["p1.s1", "The Hallam Street bridge is 40 metres long."],
+    ["p1.s2", "It opened in March 1932 and cost the council £18,000."],
+    ["p1.s3", "Trams crossed it until 1961."],
+  ]);
+  expect(r.sentences).toBe(8);
+});
+
+const runEnv = async (args: string[], env: Record<string, string | undefined>) => {
+  const proc = Bun.spawn(["bun", "src/index.ts", ...args], { stdout: "pipe", stderr: "pipe", env: { ...process.env, ...env } });
+  return { code: await proc.exited, stdout: await new Response(proc.stdout).text() };
+};
+
+test("judge without an API key is exit 2 with a hint that never asks for the key on the command line", async () => {
+  const { code, stdout } = await runEnv(["judge", join(FIX, "judge.md"), "--json"], { ANTHROPIC_API_KEY: "", PROSE_SCRUB_KEYCHAIN_SERVICE: "prose-scrub-test-no-such-item" });
+  expect(code).toBe(2);
+  const e = JSON.parse(stdout).error;
+  expect(e.code).toBe("no_api_key");
+  expect(e.hint).toContain("-w");
+});
+
+test("judge rejects bad --runs and unknown rankings before calling anything", async () => {
+  expect((await run(["judge", join(FIX, "judge.md"), "--runs", "0", "--json"])).code).toBe(2);
+  expect((await run(["judge", join(FIX, "judge.md"), "--rankings", "vibes", "--json"])).code).toBe(2);
+});
+
+// Calls the real API. Runs only when a key is available (ANTHROPIC_API_KEY or the macOS Keychain).
+const hasKey = !!process.env.ANTHROPIC_API_KEY || (process.platform === "darwin" && Bun.spawnSync(["security", "find-generic-password", "-s", process.env.PROSE_SCRUB_KEYCHAIN_SERVICE ?? "anthropic-api-key"]).exitCode === 0);
+test.skipIf(!hasKey)("judge flags the inflated paragraph and the empty sentences, and leaves the facts alone", async () => {
+  const { code, stdout } = await run(["judge", join(FIX, "judge.md"), "--runs", "3", "--json"]);
+  expect(code).toBe(0);
+  const r = JSON.parse(stdout).result;
+  const byRanking = Object.fromEntries(r.results.map((x: { ranking: string }) => [x.ranking, x]));
+  for (const x of r.results) expect(x.runs.complete).toBe(3);
+  const flagged = (id: string) => byRanking[id].units.filter((u: { flagged: boolean }) => u.flagged).map((u: { id: string }) => u.id);
+  expect(flagged("significance")).toEqual(["p2"]);
+  expect(flagged("superficial")).toContain("p2.s1");
+  expect(flagged("superficial")).toContain("p3.s3");
+  expect(flagged("superficial").filter((id: string) => id.startsWith("p1"))).toEqual([]);
+}, 120000);

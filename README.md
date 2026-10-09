@@ -11,6 +11,8 @@ bun src/index.ts scan README.md docs/ site/app --json
 bun src/index.ts scan --stdin --as md --json < draft.md
 bun src/index.ts rules --json
 bun src/index.ts headings post.md --json
+bun src/index.ts units post.md --json
+bun src/index.ts judge post.md --json
 bun src/index.ts describe
 ```
 
@@ -53,7 +55,26 @@ Directories are scanned recursively, leaving out `node_modules`, `.git` and buil
 
 ## Headings
 
-`bun src/index.ts headings post.md --json` lists a Markdown file's headings in order, each with its depth and line, and leaves out anything in code blocks or front matter. It isn't part of the gate. It exists for one check the rules can't make: whether every section is written up as the most important one. The skill sends the list to a small model and asks how important each heading is meant to sound, since a list of headings costs far less to send than the whole file.
+`bun src/index.ts headings post.md --json` lists a Markdown file's headings in order, each with its depth and line, and leaves out anything in code blocks or front matter. It isn't part of the gate. It exists for one check the rules can't make: whether every section is written up as the most important one. Send the list to a small model and ask how important each heading is meant to sound. For the body text, use `judge`.
+
+## Judge
+
+`judge` ranks a file for patterns no word list can see, using a small model (Claude Haiku 5.5 by default). It isn't part of the gate. It always exits 0 and reports a `flagged` count. Two rankings, both from Wikipedia's guide to signs of AI writing:
+
+- **significance**, per paragraph: how important the paragraph says its subject is, against how much evidence it gives. It flags a big claim with little behind it.
+- **superficial**, per sentence: whether the sentence adds new information or only interprets what came before. It flags sentences that add nothing.
+
+`units` shows the pieces it scores: every paragraph and sentence, numbered, with its line. Each ranking runs five times in parallel and the scores are averaged, but every unit also keeps its five scores and their spread, because a run that disagrees with the rest tells you something. The model scores on 0 to 50 and the result is divided down to 0 to 1, since it uses a finer grid on the wider scale. A run that skips units is asked again for the missing ones, and left out if it skips again. `--log runs.jsonl` keeps every run's raw scores.
+
+The flag thresholds are provisional until they're calibrated against human writing, and in a test on five files the superficial ranking also flagged setups like "Okay." that prepare the reader for what comes next. Treat flags as questions for a person, not edits.
+
+It needs an Anthropic API key. Set `ANTHROPIC_API_KEY`, or on macOS keep it in the Keychain, where `judge` looks when the variable isn't set. This prompt asks for the key without echoing it:
+
+```bash
+security add-generic-password -U -a "$USER" -s anthropic-api-key -w
+```
+
+A post of about 2,000 words costs 10 calls, roughly 50k input and 15k output tokens.
 
 ## Two rules for using it
 
@@ -76,11 +97,11 @@ bun run typecheck
 bun run build     # single binary in dist/
 ```
 
-Tests are end-to-end only. A change to a rule or to parsing needs a test that fails on the old code. Every commit adds an entry to [CHANGELOG.md](CHANGELOG.md), and a test keeps this README, the changelog and AGENTS.md passing the gate.
+Tests are end-to-end only. A change to a rule or to parsing needs a test that fails on the old code. Every commit adds an entry to [CHANGELOG.md](CHANGELOG.md), and a test keeps this README and the changelog passing the gate.
 
 ## Sources
 
-The phrase list, dash rules, pre-negation and the rhythm method come from the deslop skill. Several phrase and structure rules come from [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT); see `src/data/NOTICE.md`. Scaffolded with [mkcmd-agent](https://github.com/mackenziebowes/mkcmd-agent).
+The phrase list, dash rules, pre-negation and the rhythm method come from the deslop skill. The judge rankings come from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). Several phrase and structure rules come from [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT); see `src/data/NOTICE.md`. Scaffolded with [mkcmd-agent](https://github.com/mackenziebowes/mkcmd-agent).
 
 ## Licence
 

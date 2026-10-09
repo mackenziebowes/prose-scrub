@@ -2,6 +2,20 @@
 
 One entry per commit, newest first, written for the people and agents who run the gate: each entry says what changed and what it does to your results.
 
+## 0.4.0
+
+### 2026-10-09: judge and units: advisory rankings by a small model
+
+Two new commands. `units <file>` splits a file's paragraphs into numbered sentences with their lines. `judge <file>` asks Claude Haiku 5.5 to rank those units for two patterns from Wikipedia's guide to signs of AI writing that no word list can see: undue emphasis on significance (per paragraph) and superficial analysis (per sentence). Neither changes the gate. `judge` always exits 0 and reports a `flagged` count.
+
+Each ranking runs five times in parallel and the scores are averaged. Every unit keeps its per-run scores and their spread, and `--log` writes the raw runs to a file for calibration. The model scores on 0 to 50 by default, where it uses a finer grid than on 0 to 1, and results are divided back to 0 to 1. A run that skips units is asked again for those; one that skips twice is left out and reported.
+
+Two problems came up while testing on real posts and are fixed here. A score field named `claim` got sentences of text instead of numbers, so the fields are now named `importance_score`, `evidence_score` and `empty_score`, and the tool schema is strict (prompt version 2). Running five files at once hit the API's concurrency limit, so 429 responses now wait as long as `retry-after` says, up to six tries.
+
+The thresholds are provisional. The superficial ranking flagged setups that prepare the reader, such as "Okay." before a question, so the skill shows flags to the user and doesn't hand them to a rewriter. The skill's heading-importance step is replaced by `judge`. The key comes from `ANTHROPIC_API_KEY` or the macOS Keychain and never appears in output.
+
+The self-check test now gates only the README and this changelog. AGENTS.md and the skill are instructions for agents, not prose for readers, so they aren't scrubbed.
+
 ## 0.3.0
 
 ### 2026-10-09: headings command and an importance check in the skill
