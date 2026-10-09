@@ -180,8 +180,8 @@ test("MDX: imports, exports, JSX and expressions are skipped", async () => {
   expect(JSON.parse(stdout).result.files[0].kind).toBe("mdx");
 });
 
-test("the repo's own README, CHANGELOG and AGENTS.md pass the gate", async () => {
-  const { code, stdout } = await run(["scan", "README.md", "CHANGELOG.md", "AGENTS.md", "--json"]);
+test("the repo's own README, CHANGELOG, AGENTS.md and skill pass the gate", async () => {
+  const { code, stdout } = await run(["scan", "README.md", "CHANGELOG.md", "AGENTS.md", "skills", "--json"]);
   const r = JSON.parse(stdout);
   expect(r.ok ? [] : r.error.details?.findings ?? r.error).toEqual([]);
   expect(code).toBe(0);

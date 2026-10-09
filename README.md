@@ -5,6 +5,7 @@ A gate for prose. It scans Markdown, HTML, plain text and the text inside TypeSc
 It's built for agents. Nothing prompts, every result is available as one JSON object, and the exit code says what happened. An agent can run it, read the findings, hand them to a rewriter and scan again.
 
 ```bash
+git clone https://github.com/mackenziebowes/prose-scrub && cd prose-scrub
 bun install
 bun src/index.ts scan README.md docs/ site/app --json
 bun src/index.ts scan --stdin --as md --json < draft.md
@@ -54,7 +55,13 @@ Directories are scanned recursively, leaving out `node_modules`, `.git` and buil
 1. **Don't relax the gate to make text pass.** If a rule looks wrong, stop and show the file, the finding and the reason. A loosened rule usually means something else is broken.
 2. **The writer doesn't do the rewrite.** Findings go to a second agent that didn't write the text, and the writer checks its diff for changed facts.
 
-The Claude skill at `~/.claude/skills/prose-scrub/SKILL.md` runs that loop.
+## The skill
+
+`skills/prose-scrub/SKILL.md` is a Claude Code skill that runs the loop: scan, send the findings to a fresh subagent, rescan, then check the subagent's diff for changed facts. Copy it into your skills folder and fix the clone path inside if yours differs from `~/prose-scrub`:
+
+```bash
+mkdir -p ~/.claude/skills && cp -r skills/prose-scrub ~/.claude/skills/
+```
 
 ## Development
 
@@ -69,3 +76,7 @@ Tests are end-to-end only. A change to a rule or to parsing needs a test that fa
 ## Sources
 
 The phrase list, dash rules, pre-negation and the rhythm method come from the deslop skill. Several phrase and structure rules come from [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT); see `src/data/NOTICE.md`. Scaffolded with [mkcmd-agent](https://github.com/mackenziebowes/mkcmd-agent).
+
+## Licence
+
+MIT. See `LICENSE`.
