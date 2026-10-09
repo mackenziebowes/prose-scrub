@@ -58,20 +58,16 @@ export function collect(inputs: string[]): { files: string[]; unsupported: strin
 }
 
 /**
- * stdev / mean of sentence lengths, over sentences of 3+ words. Human prose sits around 0.6-1.2.
- * Only paragraph text counts: headings, list items and table rows aren't sentences.
+ * stdev / mean of sentence lengths, over sentences of 3+ words, scored from 5 sentences up: the
+ * same method and thresholds as the deslop skill's burstiness.py. Human prose sits around 0.6-1.2.
  */
 function burstiness(prose: string): { value: number | null; sentences: number } {
-  const paragraphs = prose
-    .split("\n")
-    .filter((l) => !/^\s*(#{1,6}\s|[-*+]\s|\d+[.)]\s|\|)/.test(l))
-    .join("\n");
-  const lengths = paragraphs
+  const lengths = prose
     .replace(/\s+/g, " ")
     .split(/(?<=[.!?])\s+/)
     .map((s) => s.trim().split(" ").filter(Boolean).length)
     .filter((n) => n > 2);
-  if (lengths.length < 8) return { value: null, sentences: lengths.length };
+  if (lengths.length < 5) return { value: null, sentences: lengths.length };
   const mean = lengths.reduce((a, b) => a + b, 0) / lengths.length;
   const sd = Math.sqrt(lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / lengths.length);
   return { value: Math.round((sd / mean) * 100) / 100, sentences: lengths.length };

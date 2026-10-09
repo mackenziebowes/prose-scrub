@@ -113,3 +113,10 @@ test("describe lists scan and rules", async () => {
   const { stdout } = await run(["describe"]);
   expect(JSON.parse(stdout).commands.map((c: { name: string }) => c.name)).toEqual(["scan", "rules"]);
 });
+
+test("flat prose is flagged even when headings and lists surround it", async () => {
+  const { code, stdout } = await run(["scan", join(FIX, "flat.md"), "--strict", "--json"]);
+  expect(code).toBe(1);
+  const flat = JSON.parse(stdout).error.details.findings.find((f: { rule: string }) => f.rule === "rhythm.flat");
+  expect(flat).toBeDefined();
+});
