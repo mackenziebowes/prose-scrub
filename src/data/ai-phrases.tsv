@@ -1,0 +1,112 @@
+# AI-overrepresented phrases, ranked by reported frequency multiple vs human text.
+# Columns: rank <TAB> multiplier <TAB> phrase <TAB> note
+#
+# note values:
+#   (blank)  matches as written
+#   frag     fragment; needs a noun after it, so expect noise. Real tell is the
+#            pattern "<verb> a <adjective> ___", not the exact string.
+#   garbled  corrupt source entry ("a serf reminder" for "a stark reminder").
+#            Skipped by default; --all includes them.
+#
+# The list is lemmatized, so entries read as singulars ("broad implication")
+# where real text says "broad implications". Loose mode handles that.
+1	182	provide a valuable insight
+2	111	left an indelible mark
+3	88	a stark reminder
+4	77	a nuanced understanding
+5	70	significant role in shaping
+6	69	the complex interplay
+7	64	broad implication
+8	59	an unwavering commitment
+9	58	endure a legacy	garbled
+10	53	underscore the importance
+11	49	play a pivotal role
+12	44	a pivotal moment
+13	44	navigate the complex	frag
+14	44	mark a turning point
+15	44	continue to inspire
+16	43	gain a deeper understanding
+17	43	the transformative power
+18	43	hold a significant	frag
+19	42	play a crucial role
+20	42	particularly a concern	garbled
+21	41	the relentless pursuit
+22	40	emphasize the need
+23	39	target an intervention	garbled
+24	39	a multi-faceted approach
+25	39	a serf reminder	garbled
+26	38	highlight the potential
+27	37	a significant milestone
+28	36	implication to understand	garbled
+29	36	potential risk associated
+30	35	leave a lasting	frag
+31	35	add a layer
+32	35	offer a valuable	frag
+33	35	a profound implication
+34	34	case highlights the importance
+35	33	finding a highlight of the importance	garbled
+36	32	pave the way for the future
+37	32	a significant step forward
+38	32	face a significant	frag
+39	31	finding an important implication	garbled
+40	30	emphasize the importance
+41	30	a significant implication
+42	30	delve deeper into
+43	30	reply in tone	garbled
+44	30	raise an important question
+45	29	make an informed decision in regard to	garbled
+46	29	far-reaching implications
+47	29	a comprehensive framework
+48	29	importance to consider	frag
+49	29	a unique blend
+50	28	couldn't help but wonder
+51	28	underscore the need
+52	28	framework for understanding
+53	28	highlight the need
+54	28	a comprehensive understanding
+55	27	the journey begins
+56	27	understanding the fundamental	frag
+57	26	despite the face	garbled
+58	26	a delicate balance
+59	26	the path ahead
+60	26	gain an insight
+61	26	laid the groundwork
+62	26	understand the behavior
+63	26	renew a sense
+64	26	aim to explore
+65	26	present a unique challenge
+66	25	provide a comprehensive	frag
+67	25	particularly with regard to
+68	25	address the root cause
+69	25	loom large in
+70	25	the implication of the finding
+71	25	approach ensures a	frag
+72	25	an ongoing dialogue
+73	25	carry a weight
+74	25	ability to navigate
+75	24	present a significant	frag
+76	24	study shed light on
+77	24	a diverse perspective
+78	24	face an adversity	garbled
+79	24	a comprehensive overview
+80	24	potentially lead to
+81	24	a broad understanding
+82	24	contribute to the understanding
+83	24	shape the public	frag
+84	24	particularly noteworthy
+85	23	the evidence base for decision making
+86	23	identify an area of improvement
+87	23	analysis of the data to analyze and use	garbled
+88	23	undergone a significant	frag
+89	23	need a robust	frag
+90	23	voice will fill	garbled
+91	22	concern a potential	garbled
+92	22	initiative aims to
+93	22	offering a unique	frag
+94	22	a new avenue
+95	22	despite the challenge
+96	22	ready to embrace
+97	22	the societal expectation
+98	22	make accessible	frag
+99	22	today at a fast pace	garbled
+100	22	stand in stark contrast
