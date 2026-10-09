@@ -56,7 +56,7 @@ export const scan = defineCommand({
     if (!result.passed) {
       throw new CliError(`Found ${result.count} problem${result.count === 1 ? "" : "s"}.`, {
         code: "slop_found",
-        hint: "Fix the findings, or skip a rule with --ignore <rule> where the use is deliberate. `prose-scrub rules` lists them.",
+        hint: "Fix every finding in the text. `prose-scrub rules --json` explains each rule and its fix.",
         details: result,
       });
     }
