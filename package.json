@@ -1,6 +1,6 @@
 {
   "name": "prose-scrub",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Scan prose for AI writing tells: dashes, stock phrases, pre-negation, flat rhythm. A gate for anything published under your name.",
   "type": "module",
   "private": true,

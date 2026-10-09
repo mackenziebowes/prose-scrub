@@ -2,6 +2,14 @@
 
 One entry per commit, newest first, written for the people and agents who run the gate: each entry says what changed and what it does to your results.
 
+## 0.3.0
+
+### 2026-10-09: headings command and an importance check in the skill
+
+`prose-scrub headings <file.md> --json` prints the headings of a Markdown or MDX file in order, with depth and line. The parser decides what a heading is, so a `##` line inside a code block or front matter isn't one. Other file types are a usage error (exit 2). The scan and its rules don't change.
+
+The skill now has an advisory step for Markdown. Once the gate passes, it sends the headings to a Haiku subagent, which scores how important each one is made to sound. If most score 0.8 or more, the user gets the scores. Sending a short list instead of the whole file keeps the check cheap.
+
 ## 0.2.0
 
 ### 2026-10-08: Public, with the skill and an MIT licence

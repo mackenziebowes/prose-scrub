@@ -10,6 +10,7 @@ bun install
 bun src/index.ts scan README.md docs/ site/app --json
 bun src/index.ts scan --stdin --as md --json < draft.md
 bun src/index.ts rules --json
+bun src/index.ts headings post.md --json
 bun src/index.ts describe
 ```
 
@@ -50,6 +51,10 @@ Directories are scanned recursively, leaving out `node_modules`, `.git` and buil
 
 `--ignore dash,word.adverb` skips rules by id or prefix. `structure.pre-negation` can't be skipped.
 
+## Headings
+
+`bun src/index.ts headings post.md --json` lists a Markdown file's headings in order, each with its depth and line, and leaves out anything in code blocks or front matter. It isn't part of the gate. It exists for one check the rules can't make: whether every section is written up as the most important one. The skill sends the list to a small model and asks how important each heading is meant to sound, since a list of headings costs far less to send than the whole file.
+
 ## Two rules for using it
 
 1. **Don't relax the gate to make text pass.** If a rule looks wrong, stop and show the file, the finding and the reason. A loosened rule usually means something else is broken.
@@ -57,7 +62,7 @@ Directories are scanned recursively, leaving out `node_modules`, `.git` and buil
 
 ## The skill
 
-`skills/prose-scrub/SKILL.md` is a Claude Code skill that runs the loop: scan, send the findings to a fresh subagent, rescan, then check the subagent's diff for changed facts. Copy it into your skills folder and fix the clone path inside if yours differs from `~/prose-scrub`:
+`skills/prose-scrub/SKILL.md` is a Claude Code skill that runs the loop: scan, send the findings to a fresh subagent, rescan, then check the subagent's diff for changed facts. For Markdown it also runs the headings check. Copy it into your skills folder and fix the clone path inside if yours differs from `~/prose-scrub`:
 
 ```bash
 mkdir -p ~/.claude/skills && cp -r skills/prose-scrub ~/.claude/skills/

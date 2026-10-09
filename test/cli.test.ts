@@ -118,9 +118,9 @@ test("rules lists every rule with a fix", async () => {
   expect(r.rules.map((x: { id: string }) => x.id)).toContain("rhythm.flat");
 });
 
-test("describe lists scan and rules", async () => {
+test("describe lists scan, rules and headings", async () => {
   const { stdout } = await run(["describe"]);
-  expect(JSON.parse(stdout).commands.map((c: { name: string }) => c.name)).toEqual(["scan", "rules"]);
+  expect(JSON.parse(stdout).commands.map((c: { name: string }) => c.name)).toEqual(["scan", "rules", "headings"]);
 });
 
 test("flat prose is flagged even when headings and lists surround it", async () => {
@@ -185,4 +185,29 @@ test("the repo's own README, CHANGELOG, AGENTS.md and skill pass the gate", asyn
   const r = JSON.parse(stdout);
   expect(r.ok ? [] : r.error.details?.findings ?? r.error).toEqual([]);
   expect(code).toBe(0);
+});
+
+test("headings lists every Markdown heading in order, and nothing else", async () => {
+  const { code, stdout } = await run(["headings", join(FIX, "headings.md"), "--json"]);
+  expect(code).toBe(0);
+  const r = JSON.parse(stdout);
+  expect(r.ok).toBe(true);
+  expect(r.result.files[0].headings).toEqual([
+    { depth: 1, text: "The title", line: 5 },
+    { depth: 2, text: "Where it started", line: 9 },
+    { depth: 3, text: "inline code and a link", line: 15 },
+    { depth: 2, text: "Setext heading", line: 17 },
+  ]);
+});
+
+test("headings reads Markdown only and says so for anything else", async () => {
+  const { code, stdout } = await run(["headings", join(FIX, "clean.md"), "src/index.ts", "--json"]);
+  expect(code).toBe(2);
+  expect(JSON.parse(stdout).error.message).toContain("src/index.ts");
+});
+
+test("headings reads stdin", async () => {
+  const { code, stdout } = await run(["headings", "--stdin", "--json"], "# One\n\ntext\n\n## Two\n");
+  expect(code).toBe(0);
+  expect(JSON.parse(stdout).result.files[0].headings.map((h: { text: string }) => h.text)).toEqual(["One", "Two"]);
 });
