@@ -2,7 +2,7 @@
   "lockfileVersion": 1,
   "workspaces": {
     "": {
-      "name": "scrub",
+      "name": "prose-scrub",
       "devDependencies": {
         "@types/bun": "latest",
         "typescript": "^5",

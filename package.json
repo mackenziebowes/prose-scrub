@@ -1,17 +1,17 @@
 {
-  "name": "scrub",
+  "name": "prose-scrub",
   "version": "0.1.0",
   "description": "Scan prose for AI writing tells: dashes, stock phrases, pre-negation, flat rhythm. A gate for anything published under your name.",
   "type": "module",
   "private": true,
   "bin": {
-    "scrub": "./src/index.ts"
+    "prose-scrub": "./src/index.ts"
   },
   "scripts": {
     "start": "bun run src/index.ts",
     "test": "bun test",
     "typecheck": "tsc --noEmit",
-    "build": "bun build --compile --outfile=dist/scrub src/index.ts"
+    "build": "bun build --compile --outfile=dist/prose-scrub src/index.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",

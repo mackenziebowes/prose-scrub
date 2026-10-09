@@ -1,6 +1,6 @@
 # AGENTS.md
 
-scrub: Scan prose for AI writing tells: dashes, stock phrases, pre-negation, flat rhythm. A gate for anything published under your name.
+prose-scrub: Scan prose for AI writing tells: dashes, stock phrases, pre-negation, flat rhythm. A gate for anything published under your name.
 
 ## Run
 

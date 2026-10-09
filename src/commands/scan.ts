@@ -17,9 +17,9 @@ export const scan = defineCommand({
     as: { type: "string", default: "md", description: "Format of stdin text: md, html, txt or tsx" },
   },
   examples: [
-    "scrub scan README.md docs/ --json",
-    "scrub scan site/app --strict --ignore word.adverb",
-    "cat draft.md | scrub scan --stdin --json",
+    "prose-scrub scan README.md docs/ --json",
+    "prose-scrub scan site/app --strict --ignore word.adverb",
+    "cat draft.md | prose-scrub scan --stdin --json",
   ],
   run: async ({ flags, args, log }) => {
     const ignore = (flags.ignore ?? "").split(",").map((s) => s.trim()).filter(Boolean);
@@ -31,7 +31,7 @@ export const scan = defineCommand({
       if (args.length) throw new UsageError("Pass files or --stdin, not both.");
       parts.push(scanText("<stdin>", await new Response(Bun.stdin.stream()).text(), kind, ignore));
     } else {
-      if (!args.length) throw new UsageError("No files given.", "Example: scrub scan README.md docs/ --json");
+      if (!args.length) throw new UsageError("No files given.", "Example: prose-scrub scan README.md docs/ --json");
       const { files, unsupported, missing } = collect(args);
       if (missing.length) throw new UsageError(`Not found: ${missing.join(", ")}.`);
       if (unsupported.length) {
@@ -50,7 +50,7 @@ export const scan = defineCommand({
       const counts = `${result.errors} error${result.errors === 1 ? "" : "s"} and ${result.warnings} warning${result.warnings === 1 ? "" : "s"}`;
       throw new CliError(`Found ${counts}${result.strict ? " (--strict)" : ""}.`, {
         code: "slop_found",
-        hint: "Fix the findings, or skip a rule with --ignore <rule> where the use is deliberate. `scrub rules` lists them.",
+        hint: "Fix the findings, or skip a rule with --ignore <rule> where the use is deliberate. `prose-scrub rules` lists them.",
         details: result,
       });
     }

@@ -4,7 +4,7 @@ import { allRules, stockPhraseCount } from "../lib/rules";
 export const rules = defineCommand({
   name: "rules",
   summary: "List every rule with its id, severity and fix",
-  examples: ["scrub rules --json"],
+  examples: ["prose-scrub rules --json"],
   run: () => ({
     rules: allRules,
     stockPhrases: stockPhraseCount(),

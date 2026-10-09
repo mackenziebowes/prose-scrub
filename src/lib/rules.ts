@@ -8,7 +8,7 @@ export type LineRule = {
   severity: Severity;
   description: string;
   fix: string;
-  source: "deslop" | "stop-slop" | "scrub";
+  source: "deslop" | "stop-slop" | "prose-scrub";
   pattern: RegExp;
 };
 
