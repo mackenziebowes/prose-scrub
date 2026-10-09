@@ -3,13 +3,13 @@ import { kindOf, type Kind } from "../lib/extract";
 import { lineRules } from "../lib/rules";
 import { collect, displayPath, readFile, scanText, summarize, type ScanResult } from "../lib/scan";
 
-const KINDS: Record<string, Kind> = { md: "markdown", markdown: "markdown", html: "html", tsx: "source", ts: "source", txt: "text", text: "text" };
+const KINDS: Record<string, Kind> = { md: "markdown", markdown: "markdown", mdx: "mdx", html: "html", tsx: "tsx", jsx: "tsx", js: "tsx", ts: "ts", txt: "text", text: "text" };
 
 export const scan = defineCommand({
   name: "scan",
   summary: "Scan files for AI writing tells; exits 1 on any finding",
   description:
-    "Checks Markdown, HTML, plain text, and the prose inside TS/TSX string literals. Code blocks, inline code, URLs, blockquotes, scripts and class names are skipped. Directories are scanned recursively (node_modules, .git and build output excluded). Every finding fails the gate. structure.pre-negation can't be ignored.",
+    "Parses Markdown/MDX (with GFM), HTML, plain text, and TS/TSX/JS (JSX text and string literals) and checks the readable text. Code blocks, inline code, URLs, blockquotes, scripts, styles, imports, types and class names are skipped. Rhythm is measured over paragraphs only, never headings, labels, list items or table cells. Directories are scanned recursively (node_modules, .git and build output excluded). Every finding fails the gate. structure.pre-negation can't be ignored.",
   args: "<file-or-dir...>",
   flags: {
     ignore: {
@@ -17,7 +17,7 @@ export const scan = defineCommand({
       description: "Comma-separated rule ids or prefixes to skip, e.g. word.adverb. structure.pre-negation is always enforced.",
     },
     stdin: { type: "boolean", description: "Read the text from stdin instead of files" },
-    as: { type: "string", default: "md", description: "Format of stdin text: md, html, txt or tsx" },
+    as: { type: "string", default: "md", description: "Format of stdin text: md, mdx, html, txt, ts, tsx or js" },
   },
   examples: [
     "prose-scrub scan README.md docs/ --json",
@@ -34,7 +34,7 @@ export const scan = defineCommand({
 
     if (flags.stdin) {
       const kind = KINDS[flags.as];
-      if (!kind) throw new UsageError(`Unknown --as "${flags.as}".`, "Use md, html, txt or tsx.");
+      if (!kind) throw new UsageError(`Unknown --as "${flags.as}".`, "Use md, mdx, html, txt, ts, tsx or js.");
       if (args.length) throw new UsageError("Pass files or --stdin, not both.");
       parts.push(scanText("<stdin>", await new Response(Bun.stdin.stream()).text(), kind, ignore));
     } else {
@@ -44,7 +44,7 @@ export const scan = defineCommand({
       if (unsupported.length) {
         throw new UsageError(
           `Can't scan ${unsupported.join(", ")}.`,
-          "Supported: .md .mdx .html .htm .txt .ts .tsx .js .jsx .mjs. For anything else, pipe it in with --stdin --as txt.",
+          "Supported: .md .mdx .html .htm .txt .ts .mts .cts .tsx .js .jsx .mjs .cjs, and .md.txt templates. For anything else, pipe it in with --stdin --as txt.",
         );
       }
       if (!files.length) throw new UsageError("No supported files found in the given directories.");

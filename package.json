@@ -1,6 +1,6 @@
 {
   "name": "prose-scrub",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Scan prose for AI writing tells: dashes, stock phrases, pre-negation, flat rhythm. A gate for anything published under your name.",
   "type": "module",
   "private": true,
@@ -15,6 +15,18 @@
   },
   "devDependencies": {
     "@types/bun": "latest",
-    "typescript": "^5"
+    "@types/mdast": "^4.0.4"
+  },
+  "dependencies": {
+    "entities": "^8.1.0",
+    "mdast-util-from-markdown": "^2.1.0",
+    "mdast-util-frontmatter": "^2.0.1",
+    "mdast-util-gfm": "^3.1.0",
+    "mdast-util-mdx": "^3.0.0",
+    "micromark-extension-frontmatter": "^2.0.0",
+    "micromark-extension-gfm": "^3.0.0",
+    "micromark-extension-mdxjs": "^3.0.0",
+    "parse5": "^8.0.1",
+    "typescript": "^6"
   }
 }

@@ -129,3 +129,53 @@ test("flat prose is flagged even when headings and lists surround it", async () 
   const flat = JSON.parse(stdout).error.details.findings.find((f: { rule: string }) => f.rule === "rhythm.flat");
   expect(flat).toBeDefined();
 });
+
+// Parsing: every rule sees real text blocks from a real parser.
+const P = join(FIX, "parsed");
+const report = (stdout: string) => {
+  const r = JSON.parse(stdout);
+  return r.ok ? r.result : r.error.details;
+};
+
+test("Markdown: rhythm counts paragraph sentences only, never headings, list items, cells or code", async () => {
+  const { stdout } = await run(["scan", join(P, "rhythm.md"), "--json"]);
+  const r = report(stdout);
+  expect(r.files[0].sentences).toBe(5);
+  expect(r.findings.map((f: { rule: string; line: number }) => [f.rule, f.line])).toEqual([["dash.em", 3]]);
+});
+
+test("Markdown: a phrase that wraps onto the next line is still found", async () => {
+  const { code, stdout } = await run(["scan", join(P, "wrapped.md"), "--json"]);
+  expect(code).toBe(1);
+  const f = JSON.parse(stdout).error.details.findings;
+  expect(f.map((x: { rule: string; line: number; col: number }) => [x.rule, x.line, x.col])).toEqual([["structure.pre-negation", 1, 32]]);
+});
+
+test("Markdown templates (.md.txt) are parsed as Markdown, so their code blocks are skipped", async () => {
+  const { code, stdout } = await run(["scan", join(P, "AGENTS.md.txt"), "--json"]);
+  expect(code).toBe(0);
+  expect(JSON.parse(stdout).result.files[0].kind).toBe("markdown");
+});
+
+test("HTML: entities are decoded for phrase rules; alt text and meta descriptions are checked; blockquotes aren't", async () => {
+  const { stdout } = await run(["scan", join(P, "page.html"), "--json"]);
+  const f = report(stdout).findings.map((x: { rule: string; line: number }) => [x.rule, x.line]);
+  expect(f).toEqual([
+    ["dash.em", 2],
+    ["structure.pre-negation", 4],
+    ["dash.em", 5],
+  ]);
+});
+
+test("TSX: escapes are decoded; types, directives, class lists, styles and command props are skipped; rhythm reads paragraphs, not labels", async () => {
+  const { stdout } = await run(["scan", join(P, "Labels.tsx"), "--json"]);
+  const r = report(stdout);
+  expect(r.findings.map((x: { rule: string; line: number; col: number }) => [x.rule, x.line, x.col])).toEqual([["dash.em", 7, 25]]);
+  expect(r.files[0].sentences).toBe(5);
+});
+
+test("MDX: imports, exports, JSX and expressions are skipped", async () => {
+  const { code, stdout } = await run(["scan", join(P, "post.mdx"), "--json"]);
+  expect(code).toBe(0);
+  expect(JSON.parse(stdout).result.files[0].kind).toBe("mdx");
+});

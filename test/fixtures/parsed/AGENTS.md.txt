@@ -1,0 +1,7 @@
+# Agents
+
+Run the tests before you commit.
+
+```bash
+echo "a dash — inside a code block"
+```

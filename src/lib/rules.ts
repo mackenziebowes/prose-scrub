@@ -243,10 +243,11 @@ export const lineRules: LineRule[] = [
     id: "structure.connector-opener",
     scope: "prose",
     ignorable: true,
-    description: "Paragraph opens with a connector.",
+    description: "Paragraph or sentence opens with a connector.",
     fix: "Delete it, or rewrite so the logical turn shows in the content.",
     source: "deslop",
-    pattern: /^\s*(?:[-*]\s+)?(?:Moreover|Furthermore|Additionally|In addition|Notably|Importantly|Ultimately|Overall|Crucially),/gmu,
+    // Blocks are one line each (newlines become spaces), so ^ is the start of the paragraph.
+    pattern: /(?:^|(?<=[.!?]['"”’)\]]*\s))\s*(?:Moreover|Furthermore|Additionally|In addition|Notably|Importantly|Ultimately|Overall|Crucially),/gu,
   },
   {
     id: "word.corporate",
