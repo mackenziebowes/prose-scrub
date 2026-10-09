@@ -122,9 +122,9 @@ export function readsLikeProse(s: string): boolean {
   return codey / words.length < 0.34;
 }
 
-/** True when the text ends at least one sentence. Headings, labels and buttons usually don't. */
+/** True when the text ends like a sentence. Headings, labels and buttons don't, even with "FIG." or "e.g." inside. */
 function endsSentence(s: string): boolean {
-  return /[.!?]['"”’)\]]*(?:\s|$)/.test(s.trim());
+  return /[.!?]['"”’)\]]*$/.test(s.trim());
 }
 
 function plain(src: string, pieces: Piece[]): string {
