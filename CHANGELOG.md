@@ -4,7 +4,7 @@ One entry per commit, newest first, written for the people and agents who run th
 
 ## 0.2.0
 
-### 2026-10-09: Public, with the skill and an MIT licence
+### 2026-10-08: Public, with the skill and an MIT licence
 
 prose-scrub is now on GitHub under the MIT licence. The Claude Code skill that runs the rewrite loop ships in `skills/prose-scrub/SKILL.md`, with install steps in the README. The skill's paths point at a clone instead of one machine. The self-check test now scans the skill too.
 
