@@ -6,7 +6,6 @@ prose-scrub: Scan prose for AI writing tells: dashes, stock phrases, pre-negatio
 
 - `bun install`, then `bun run src/index.ts <command> [flags]`.
 - `bun run src/index.ts describe` prints every command, flag and example as JSON. Start there.
-- `bun test` runs `test/cli.test.ts`, which drives the CLI as a subprocess.
 
 ## Output contract
 
@@ -33,7 +32,6 @@ The framework in `src/core/cli.ts` enforces this for every command. Do not print
 - `src/index.ts`: entry point; passes name, about and commands to `runCLI`.
 - `src/core/cli.ts`: the framework. Copied from mkcmd-agent; edit it if you need to, it has no dependencies.
 - `src/commands/`: one file per command, plus `index.ts` listing them.
-- `test/cli.test.ts`: subprocess tests of the contract.
 
 ## Changelog
 
@@ -41,6 +39,6 @@ Every commit adds an entry at the top of `CHANGELOG.md`, in the same commit. Wri
 
 ## Rules
 
-- Tests are end-to-end only: run the CLI as a subprocess. A change to a rule or to parsing needs a test that fails on the old code.
+- No tests here (Mackenzie, 2026-10-15: every test was deleted). Show a change working by running the program, in the hand-back.
 - Never relax a rule, threshold or extraction to make text pass. If a rule misfires, say so with the file, the finding and why.
 - README.md, CHANGELOG.md and AGENTS.md must pass `prose-scrub scan`; a test checks this. Findings in them go to a second agent to fix, never to the one that wrote them.

@@ -92,12 +92,11 @@ mkdir -p ~/.claude/skills && cp -r skills/prose-scrub ~/.claude/skills/
 ## Development
 
 ```bash
-bun test          # end-to-end: runs the CLI as a subprocess against test/fixtures
 bun run typecheck
 bun run build     # single binary in dist/
 ```
 
-Tests are end-to-end only. A change to a rule or to parsing needs a test that fails on the old code. Every commit adds an entry to [CHANGELOG.md](CHANGELOG.md), and a test keeps this README and the changelog passing the gate.
+Every commit adds an entry to [CHANGELOG.md](CHANGELOG.md).
 
 ## Sources
 
