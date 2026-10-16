@@ -9,7 +9,6 @@
   },
   "scripts": {
     "start": "bun run src/index.ts",
-    "test": "bun test",
     "typecheck": "tsc --noEmit",
     "build": "bun build --compile --outfile=dist/prose-scrub src/index.ts"
   },
