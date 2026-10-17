@@ -4,6 +4,10 @@ One entry per commit, newest first, written for the people and agents who run th
 
 ## 0.4.0
 
+### 2026-10-17: README: how to reach the author
+
+The README ends with a Talk section: an email address and an X handle for anyone who gates their agents' writing and wants to compare notes. The scanner and its results are unchanged.
+
 ### 2026-10-09: judge and units: advisory rankings by a small model
 
 Two new commands. `units <file>` splits a file's paragraphs into numbered sentences with their lines. `judge <file>` asks Claude Haiku 5.5 to rank those units for two patterns from Wikipedia's guide to signs of AI writing that no word list can see: undue emphasis on significance (per paragraph) and superficial analysis (per sentence). Neither changes the gate. `judge` always exits 0 and reports a `flagged` count.

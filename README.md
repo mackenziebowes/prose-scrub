@@ -102,6 +102,10 @@ Every commit adds an entry to [CHANGELOG.md](CHANGELOG.md).
 
 The phrase list, dash rules, pre-negation and the rhythm method come from the deslop skill. The judge rankings come from [Wikipedia: Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing). Several phrase and structure rules come from [stop-slop](https://github.com/hardikpandya/stop-slop) (MIT); see `src/data/NOTICE.md`. Scaffolded with [mkcmd-agent](https://github.com/mackenziebowes/mkcmd-agent).
 
+## Talk
+
+If you're gating what your agents write before it goes out under your name, I'd like to compare notes. Email mackenzie@mackenziebowes.com, or find me on X as [@_mackenziebowes](https://x.com/_mackenziebowes).
+
 ## Licence
 
 MIT. See `LICENSE`.
